@@ -16,9 +16,9 @@ var cities = [
 ];
 
 var data =  [
-    {city: 0, street: 'Ул. Ленина', point: [55.831903, 37.411961], tariffs: [0, 1], technologies: [0]},
-    {city: 0, street: 'Ул. Сидорова', point: [55.763338, 37.565466], tariffs: [1], technologies: [1]},
-    {city: 0, street: 'Ул. Петрова', point: [55.163338, 37.585466], tariffs: [2, 0, 1], technologies: [0, 1]},
+    {city: 0, street: 'Ул. Ленина', point: [55.831903, 37.411961], tariffs: [0, 1], technologies: [0], circle: [[55.831903, 37.411961], 200]},
+    {city: 0, street: 'Ул. Сидорова', point: [55.763338, 37.565466], tariffs: [1], technologies: [1], rectangle: [[55.763338, 37.565466], [55.773338, 37.575466]]},
+    {city: 0, street: 'Ул. Петрова', point: [55.163338, 37.585466], tariffs: [2, 0, 1], technologies: [0, 1], polygon: [[[55.163338, 37.585466], [55.173338, 37.595466], [55.173338, 37.555466], [55.183338, 37.505466]]]},
     {city: 1, street: 'Кв. Ленина', point: [55.744522, 37.616378], tariffs: [1, 2], technologies: [2]},
     {city: 1, street: 'Пр. Сталина', point: [55.793559, 37.435983]},
     {city: 1, street: 'Кв. Берии', point: [55.716770, 37.482338], tariffs: [0, 1], technologies: [2]},
@@ -110,19 +110,53 @@ $( document ).ready(function() {
         var geoObjects = [];
     
         for (var i = 0, len = data.length; i < len; i++) {
-            geoObjects[i] = new ymaps.Placemark(data[i].point, {
+            var properties = {
                 hintContent: i, 
                 balloonContentHeader: cities[data[i].city].name + ', ' + data[i].street,
                 balloonContentBody: "<b>Тарифы</b>: " + (data[i].tariffs? data[i].tariffs.map(index => tariffs[index].name).join(','): '<i>нет</i>'),
                 balloonContentFooter: "<b>Технологии</b>: " + (data[i].technologies? data[i].technologies.map(index => technologies[index].name).join(','): '<i>Ведутся работы по монтажу сети</i>')
-            }, {
-                iconColor: data[i].technologies? technologies[data[i].technologies[0]].color: '#D73AD2'
-            });
-            geoObjects[i].events.add('click', function (e) {
-                var index = e.get('target').properties._data.hintContent;
-                $('#input-city').val(data[index].city).change();
-                $('#input-street').val(data[index].point.join(',')).change();
-            })
+            }
+            if (data[i].point) {
+                var point = new ymaps.Placemark(data[i].point, properties, {
+                    iconColor: data[i].technologies? technologies[data[i].technologies[0]].color: '#D73AD2'
+                });
+                point.events.add('click', function (e) {
+                    var index = e.get('target').properties._data.hintContent;
+                    $('#input-city').val(data[index].city).change();
+                    $('#input-street').val(data[index].point.join(',')).change();
+                })
+                geoObjects.push(point);
+            }
+            if (data[i].rectangle) {
+                var rectangle = new ymaps.Rectangle(data[i].rectangle.geometry? data[i].rectangle.geometry: data[i].rectangle,
+                    properties, data[i].rectangle.options? data[i].rectangle.options: {})
+                rectangle.events.add('click', function (e) {
+                    var index = e.get('target').properties._data.hintContent;
+                    $('#input-city').val(data[index].city).change();
+                    $('#input-street').val(data[index].point.join(',')).change();
+                })
+                myMap.geoObjects.add(rectangle);
+            }
+            if (data[i].polygon) {
+                var polygon = new ymaps.Polygon(data[i].polygon.geometry? data[i].polygon.geometry: data[i].polygon,
+                    properties, data[i].polygon.options? data[i].polygon.options: {})
+                polygon.events.add('click', function (e) {
+                    var index = e.get('target').properties._data.hintContent;
+                    $('#input-city').val(data[index].city).change();
+                    $('#input-street').val(data[index].point.join(',')).change();
+                })
+                myMap.geoObjects.add(polygon);
+            }
+            if (data[i].circle) {
+                var circle = new ymaps.Circle(data[i].circle.geometry? data[i].circle.geometry: data[i].circle,
+                    properties, data[i].circle.options? data[i].circle.options: {})
+                circle.events.add('click', function (e) {
+                    var index = e.get('target').properties._data.hintContent;
+                    $('#input-city').val(data[index].city).change();
+                    $('#input-street').val(data[index].point.join(',')).change();
+                })
+                myMap.geoObjects.add(circle);
+            }
         }
     
         clusterer.add(geoObjects);
